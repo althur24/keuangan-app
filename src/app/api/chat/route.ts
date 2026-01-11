@@ -78,8 +78,8 @@ export async function POST(req: Request) {
         }
 
         // SELECT MODEL DYNAMICALLY
-        // Using gemini-2.0-flash-exp (latest experimental, Dec 2024)
-        const modelName = "gemini-2.0-flash-exp";
+        // Using gemini-1.5-flash (stable, supports more regions including Indonesia)
+        const modelName = "gemini-1.5-flash";
 
         const model = genAI.getGenerativeModel({ model: modelName });
 
