@@ -38,7 +38,8 @@ export async function POST(req: Request) {
         const cookieStore = await cookies();
         cookieStore.set('session', session, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Set to false for HTTP, change to true if using HTTPS
+            sameSite: 'lax',
             expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             path: '/',
         });
