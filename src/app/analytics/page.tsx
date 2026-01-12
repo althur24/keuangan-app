@@ -525,18 +525,30 @@ export default function AnalyticsPage() {
                                     const clampedY = Math.max(y, 30);
                                     return (
                                         <g key={i}>
-                                            {/* Amount Label Above Dot */}
+                                            {/* Amount Label with Rounded Rect Background */}
                                             {d.amount > 0 && (
-                                                <text
-                                                    x={x}
-                                                    y={clampedY - 10}
-                                                    textAnchor="middle"
-                                                    fontSize="7"
-                                                    fontWeight="600"
-                                                    fill="#FF5630"
-                                                >
-                                                    {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
-                                                </text>
+                                                <g>
+                                                    <rect
+                                                        x={x - 20}
+                                                        y={clampedY - 26}
+                                                        width="40"
+                                                        height="16"
+                                                        rx="8"
+                                                        fill="white"
+                                                        stroke="#FFE0D6"
+                                                        strokeWidth="1"
+                                                    />
+                                                    <text
+                                                        x={x}
+                                                        y={clampedY - 14}
+                                                        textAnchor="middle"
+                                                        fontSize="8"
+                                                        fontWeight="600"
+                                                        fill="#FF5630"
+                                                    >
+                                                        {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
+                                                    </text>
+                                                </g>
                                             )}
                                             <circle cx={x} cy={clampedY} r="6" fill="#FF5630" opacity="0.1" />
                                             <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#FF5630" strokeWidth="2" />
@@ -637,18 +649,30 @@ export default function AnalyticsPage() {
                                     const clampedY = Math.max(y, 30);
                                     return (
                                         <g key={i}>
-                                            {/* Amount Label Above Dot */}
+                                            {/* Amount Label with Rounded Rect Background */}
                                             {d.amount > 0 && (
-                                                <text
-                                                    x={x}
-                                                    y={clampedY - 10}
-                                                    textAnchor="middle"
-                                                    fontSize="7"
-                                                    fontWeight="600"
-                                                    fill="#36B37E"
-                                                >
-                                                    {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
-                                                </text>
+                                                <g>
+                                                    <rect
+                                                        x={x - 20}
+                                                        y={clampedY - 26}
+                                                        width="40"
+                                                        height="16"
+                                                        rx="8"
+                                                        fill="white"
+                                                        stroke="#C8F7DC"
+                                                        strokeWidth="1"
+                                                    />
+                                                    <text
+                                                        x={x}
+                                                        y={clampedY - 14}
+                                                        textAnchor="middle"
+                                                        fontSize="8"
+                                                        fontWeight="600"
+                                                        fill="#36B37E"
+                                                    >
+                                                        {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
+                                                    </text>
+                                                </g>
                                             )}
                                             <circle cx={x} cy={clampedY} r="6" fill="#36B37E" opacity="0.1" />
                                             <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#36B37E" strokeWidth="2" />
