@@ -540,8 +540,9 @@ export default function AnalyticsPage() {
                                                     />
                                                     <text
                                                         x={x}
-                                                        y={clampedY - 14}
+                                                        y={clampedY - 18}
                                                         textAnchor="middle"
+                                                        dominantBaseline="middle"
                                                         fontSize="8"
                                                         fontWeight="600"
                                                         fill="#FF5630"
@@ -664,8 +665,9 @@ export default function AnalyticsPage() {
                                                     />
                                                     <text
                                                         x={x}
-                                                        y={clampedY - 14}
+                                                        y={clampedY - 18}
                                                         textAnchor="middle"
+                                                        dominantBaseline="middle"
                                                         fontSize="8"
                                                         fontWeight="600"
                                                         fill="#36B37E"
