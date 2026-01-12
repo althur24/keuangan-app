@@ -105,6 +105,10 @@ export default function AnalyticsPage() {
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<'start' | 'end'>('start');
 
+    // Trend Chart state
+    type TrendPeriod = '7d' | '30d' | '12m';
+    const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>('7d');
+
     // Budget Tracker state
     const [budgets, setBudgets] = useState<{ category: string; amount: number }[]>([]);
     const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -207,29 +211,118 @@ export default function AnalyticsPage() {
         ? ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100
         : 0;
 
-    // Trend Chart: Daily totals for last 7 days
-    const trendDays = 7;
-    const trendData: { date: string; amount: number }[] = [];
-    for (let i = trendDays - 1; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
+    // Trend Chart: Dynamic periods (7 days, 30 days, 12 months)
+    const getTrendData = () => {
+        const expenseData: { label: string; amount: number }[] = [];
+        const incomeData: { label: string; amount: number }[] = [];
 
-        const dayTotal = transactions
-            .filter(t => {
-                const d = new Date(t.created_at);
-                return t.type === 'expense' && d >= date && d < nextDay;
-            })
-            .reduce((s, t) => s + t.amount, 0);
+        if (trendPeriod === '7d') {
+            // 7 days - daily data
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                date.setHours(0, 0, 0, 0);
+                const nextDay = new Date(date);
+                nextDay.setDate(nextDay.getDate() + 1);
 
-        trendData.push({
-            date: date.toLocaleDateString('id-ID', { weekday: 'short' }),
-            amount: dayTotal
-        });
-    }
-    const trendMax = Math.max(...trendData.map(d => d.amount), 1);
+                const dayExpense = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'expense' && d >= date && d < nextDay;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                const dayIncome = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'income' && d >= date && d < nextDay;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                expenseData.push({
+                    label: date.toLocaleDateString('id-ID', { weekday: 'short' }),
+                    amount: dayExpense
+                });
+                incomeData.push({
+                    label: date.toLocaleDateString('id-ID', { weekday: 'short' }),
+                    amount: dayIncome
+                });
+            }
+        } else if (trendPeriod === '30d') {
+            // 30 days - weekly data (4-5 weeks)
+            for (let i = 4; i >= 0; i--) {
+                const weekEnd = new Date(now);
+                weekEnd.setDate(weekEnd.getDate() - (i * 7));
+                weekEnd.setHours(23, 59, 59, 999);
+                const weekStart = new Date(weekEnd);
+                weekStart.setDate(weekStart.getDate() - 6);
+                weekStart.setHours(0, 0, 0, 0);
+
+                const weekExpense = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'expense' && d >= weekStart && d <= weekEnd;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                const weekIncome = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'income' && d >= weekStart && d <= weekEnd;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                expenseData.push({
+                    label: `Mg ${5 - i}`,
+                    amount: weekExpense
+                });
+                incomeData.push({
+                    label: `Mg ${5 - i}`,
+                    amount: weekIncome
+                });
+            }
+        } else {
+            // 12 months - monthly data
+            for (let i = 11; i >= 0; i--) {
+                const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+
+                const monthExpense = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'expense' && d >= monthDate && d <= monthEnd;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                const monthIncome = transactions
+                    .filter(t => {
+                        const d = new Date(t.created_at);
+                        return t.type === 'income' && d >= monthDate && d <= monthEnd;
+                    })
+                    .reduce((s, t) => s + t.amount, 0);
+
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                expenseData.push({
+                    label: monthNames[monthDate.getMonth()],
+                    amount: monthExpense
+                });
+                incomeData.push({
+                    label: monthNames[monthDate.getMonth()],
+                    amount: monthIncome
+                });
+            }
+        }
+
+        return { expenseData, incomeData };
+    };
+
+    const { expenseData: trendExpenseData, incomeData: trendIncomeData } = getTrendData();
+    const trendExpenseMax = Math.max(...trendExpenseData.map(d => d.amount), 1);
+    const trendIncomeMax = Math.max(...trendIncomeData.map(d => d.amount), 1);
+
+    // For backward compatibility (old variable name)
+    const trendData = trendExpenseData;
+    const trendMax = trendExpenseMax;
 
     const filterLabels: Record<DateFilter, string> = {
         'all': 'Semua',
@@ -388,131 +481,187 @@ export default function AnalyticsPage() {
                 </div>
             </div>
 
-            {/* Trend Chart - 7 Days (Premium Line Chart) */}
-            <div className="px-6 mb-4">
+            {/* Trend Charts Section */}
+            <div className="px-6 mb-4 space-y-4">
+                {/* Period Toggle */}
+                <div className="flex gap-2 justify-center">
+                    {([
+                        { key: '7d', label: '7 Hari' },
+                        { key: '30d', label: '30 Hari' },
+                        { key: '12m', label: '12 Bulan' }
+                    ] as { key: TrendPeriod; label: string }[]).map(p => (
+                        <button
+                            key={p.key}
+                            onClick={() => setTrendPeriod(p.key)}
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${trendPeriod === p.key
+                                    ? 'bg-[#00875A] text-white shadow-md'
+                                    : 'bg-white text-[#6B778C] border border-gray-200 hover:bg-[#F4F5F7]'
+                                }`}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Expense Trend Chart */}
                 <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100/50">
                     <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-sm font-bold text-[#172B4D]">Tren Pengeluaran</h3>
-                        <span className="text-[10px] font-medium text-white bg-[#00875A] px-2.5 py-1 rounded-full">7 Hari</span>
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-[#FF5630]/10">
+                                <TrendingDown size={14} className="text-[#FF5630]" />
+                            </div>
+                            <h3 className="text-sm font-bold text-[#172B4D]">Tren Pengeluaran</h3>
+                        </div>
+                        <span className="text-[10px] font-medium text-white bg-[#FF5630] px-2.5 py-1 rounded-full">
+                            {trendPeriod === '7d' ? '7 Hari' : trendPeriod === '30d' ? '30 Hari' : '12 Bulan'}
+                        </span>
                     </div>
                     {loading ? (
                         <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl animate-pulse" />
                     ) : (
                         <div className="relative">
-                            {/* SVG Line Chart */}
-                            <svg viewBox="0 0 320 140" className="w-full h-36" preserveAspectRatio="xMidYMid meet">
-                                {/* Gradient Definitions */}
+                            <svg viewBox={`0 0 320 140`} className="w-full h-36" preserveAspectRatio="xMidYMid meet">
                                 <defs>
-                                    <linearGradient id="lineGradientPremium" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stopColor="#00875A" />
-                                        <stop offset="50%" stopColor="#36B37E" />
-                                        <stop offset="100%" stopColor="#00875A" />
+                                    <linearGradient id="expenseLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#FF5630" />
+                                        <stop offset="50%" stopColor="#FF7452" />
+                                        <stop offset="100%" stopColor="#FF5630" />
                                     </linearGradient>
-                                    <linearGradient id="areaGradientPremium" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stopColor="#00875A" stopOpacity="0.25" />
-                                        <stop offset="50%" stopColor="#36B37E" stopOpacity="0.1" />
-                                        <stop offset="100%" stopColor="#00875A" stopOpacity="0" />
+                                    <linearGradient id="expenseAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stopColor="#FF5630" stopOpacity="0.25" />
+                                        <stop offset="100%" stopColor="#FF5630" stopOpacity="0" />
                                     </linearGradient>
-                                    <filter id="glow">
-                                        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur" />
-                                            <feMergeNode in="SourceGraphic" />
-                                        </feMerge>
-                                    </filter>
-                                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                                        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
-                                    </filter>
                                 </defs>
-
-                                {/* Soft Grid Lines */}
                                 <line x1="30" y1="110" x2="300" y2="110" stroke="#E5E7EB" strokeWidth="1" />
                                 <line x1="30" y1="75" x2="300" y2="75" stroke="#F3F4F6" strokeWidth="0.5" strokeDasharray="4 4" />
                                 <line x1="30" y1="40" x2="300" y2="40" stroke="#F3F4F6" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                                {/* Area Fill */}
                                 <path
-                                    d={`M 30,110 ${trendData.map((d, i) => {
-                                        const x = 30 + (i * (270 / 6));
-                                        const y = 110 - ((d.amount / (trendMax || 1)) * 60);
+                                    d={`M 30,110 ${trendExpenseData.map((d, i) => {
+                                        const x = 30 + (i * (270 / Math.max(trendExpenseData.length - 1, 1)));
+                                        const y = 110 - ((d.amount / (trendExpenseMax || 1)) * 60);
                                         return `L ${x},${Math.max(y, 30)}`;
-                                    }).join(' ')} L ${30 + (6 * (270 / 6))},110 Z`}
-                                    fill="url(#areaGradientPremium)"
+                                    }).join(' ')} L ${30 + ((trendExpenseData.length - 1) * (270 / Math.max(trendExpenseData.length - 1, 1)))},110 Z`}
+                                    fill="url(#expenseAreaGradient)"
                                 />
-
-                                {/* Line Path with Glow */}
                                 <polyline
-                                    points={trendData.map((d, i) => {
-                                        const x = 30 + (i * (270 / 6));
-                                        const y = 110 - ((d.amount / (trendMax || 1)) * 60);
+                                    points={trendExpenseData.map((d, i) => {
+                                        const x = 30 + (i * (270 / Math.max(trendExpenseData.length - 1, 1)));
+                                        const y = 110 - ((d.amount / (trendExpenseMax || 1)) * 60);
                                         return `${x},${Math.max(y, 30)}`;
                                     }).join(' ')}
                                     fill="none"
-                                    stroke="url(#lineGradientPremium)"
-                                    strokeWidth="1.5"
+                                    stroke="url(#expenseLineGradient)"
+                                    strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                 />
-
-                                {/* Data Points with Labels Above */}
-                                {trendData.map((d, i) => {
-                                    const x = 30 + (i * (270 / 6));
-                                    const y = 110 - ((d.amount / (trendMax || 1)) * 60);
+                                {trendExpenseData.map((d, i) => {
+                                    const x = 30 + (i * (270 / Math.max(trendExpenseData.length - 1, 1)));
+                                    const y = 110 - ((d.amount / (trendExpenseMax || 1)) * 60);
                                     const clampedY = Math.max(y, 30);
                                     return (
                                         <g key={i}>
-                                            {/* Amount Label Above Dot */}
-                                            {d.amount > 0 && (
-                                                <g filter="url(#shadow)">
-                                                    <rect
-                                                        x={x - 22}
-                                                        y={clampedY - 28}
-                                                        width="44"
-                                                        height="18"
-                                                        rx="9"
-                                                        fill="white"
-                                                        stroke="#E5E7EB"
-                                                        strokeWidth="0.5"
-                                                    />
-                                                    <text
-                                                        x={x}
-                                                        y={clampedY - 15}
-                                                        textAnchor="middle"
-                                                        fontSize="8"
-                                                        fontWeight="600"
-                                                        fill="#00875A"
-                                                    >
-                                                        {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
-                                                    </text>
-                                                </g>
-                                            )}
-                                            {/* Outer Glow Ring */}
-                                            <circle cx={x} cy={clampedY} r="7" fill="#00875A" opacity="0.08" />
-                                            {/* White Dot with Border */}
-                                            <circle cx={x} cy={clampedY} r="4" fill="white" stroke="#00875A" strokeWidth="2" />
+                                            <circle cx={x} cy={clampedY} r="6" fill="#FF5630" opacity="0.1" />
+                                            <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#FF5630" strokeWidth="2" />
                                         </g>
                                     );
                                 })}
                             </svg>
-
-                            {/* X-Axis Labels (Days) */}
-                            <div className="flex justify-between px-2 -mt-1">
-                                {trendData.map((d, i) => (
-                                    <div key={i} className="flex flex-col items-center" style={{ width: `${100 / 7}%` }}>
-                                        <span className="text-[10px] font-semibold text-[#172B4D]">{d.date}</span>
+                            <div className="flex justify-between px-1 -mt-1">
+                                {trendExpenseData.map((d, i) => (
+                                    <div key={i} className="flex flex-col items-center" style={{ width: `${100 / trendExpenseData.length}%` }}>
+                                        <span className="text-[9px] font-medium text-[#6B778C] truncate">{d.label}</span>
                                     </div>
                                 ))}
                             </div>
+                            {trendExpenseMax > 1 && (
+                                <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[10px] text-[#6B778C]">Total Periode</span>
+                                    <span className="text-xs font-bold text-[#FF5630]">
+                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(trendExpenseData.reduce((s, d) => s + d.amount, 0))}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
-                            {/* Summary Footer */}
-                            {trendMax > 0 && (
-                                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-[#00875A]" />
-                                        <span className="text-[10px] text-[#6B778C]">Tertinggi</span>
+                {/* Income Trend Chart */}
+                <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100/50">
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-[#36B37E]/10">
+                                <TrendingUp size={14} className="text-[#36B37E]" />
+                            </div>
+                            <h3 className="text-sm font-bold text-[#172B4D]">Tren Pemasukan</h3>
+                        </div>
+                        <span className="text-[10px] font-medium text-white bg-[#36B37E] px-2.5 py-1 rounded-full">
+                            {trendPeriod === '7d' ? '7 Hari' : trendPeriod === '30d' ? '30 Hari' : '12 Bulan'}
+                        </span>
+                    </div>
+                    {loading ? (
+                        <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl animate-pulse" />
+                    ) : (
+                        <div className="relative">
+                            <svg viewBox={`0 0 320 140`} className="w-full h-36" preserveAspectRatio="xMidYMid meet">
+                                <defs>
+                                    <linearGradient id="incomeLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#36B37E" />
+                                        <stop offset="50%" stopColor="#57D9A3" />
+                                        <stop offset="100%" stopColor="#36B37E" />
+                                    </linearGradient>
+                                    <linearGradient id="incomeAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stopColor="#36B37E" stopOpacity="0.25" />
+                                        <stop offset="100%" stopColor="#36B37E" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <line x1="30" y1="110" x2="300" y2="110" stroke="#E5E7EB" strokeWidth="1" />
+                                <line x1="30" y1="75" x2="300" y2="75" stroke="#F3F4F6" strokeWidth="0.5" strokeDasharray="4 4" />
+                                <line x1="30" y1="40" x2="300" y2="40" stroke="#F3F4F6" strokeWidth="0.5" strokeDasharray="4 4" />
+                                <path
+                                    d={`M 30,110 ${trendIncomeData.map((d, i) => {
+                                        const x = 30 + (i * (270 / Math.max(trendIncomeData.length - 1, 1)));
+                                        const y = 110 - ((d.amount / (trendIncomeMax || 1)) * 60);
+                                        return `L ${x},${Math.max(y, 30)}`;
+                                    }).join(' ')} L ${30 + ((trendIncomeData.length - 1) * (270 / Math.max(trendIncomeData.length - 1, 1)))},110 Z`}
+                                    fill="url(#incomeAreaGradient)"
+                                />
+                                <polyline
+                                    points={trendIncomeData.map((d, i) => {
+                                        const x = 30 + (i * (270 / Math.max(trendIncomeData.length - 1, 1)));
+                                        const y = 110 - ((d.amount / (trendIncomeMax || 1)) * 60);
+                                        return `${x},${Math.max(y, 30)}`;
+                                    }).join(' ')}
+                                    fill="none"
+                                    stroke="url(#incomeLineGradient)"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                {trendIncomeData.map((d, i) => {
+                                    const x = 30 + (i * (270 / Math.max(trendIncomeData.length - 1, 1)));
+                                    const y = 110 - ((d.amount / (trendIncomeMax || 1)) * 60);
+                                    const clampedY = Math.max(y, 30);
+                                    return (
+                                        <g key={i}>
+                                            <circle cx={x} cy={clampedY} r="6" fill="#36B37E" opacity="0.1" />
+                                            <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#36B37E" strokeWidth="2" />
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                            <div className="flex justify-between px-1 -mt-1">
+                                {trendIncomeData.map((d, i) => (
+                                    <div key={i} className="flex flex-col items-center" style={{ width: `${100 / trendIncomeData.length}%` }}>
+                                        <span className="text-[9px] font-medium text-[#6B778C] truncate">{d.label}</span>
                                     </div>
-                                    <span className="text-xs font-bold text-[#00875A]">
-                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(trendMax)}
+                                ))}
+                            </div>
+                            {trendIncomeMax > 1 && (
+                                <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[10px] text-[#6B778C]">Total Periode</span>
+                                    <span className="text-xs font-bold text-[#36B37E]">
+                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(trendIncomeData.reduce((s, d) => s + d.amount, 0))}
                                     </span>
                                 </div>
                             )}
