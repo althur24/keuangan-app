@@ -615,45 +615,47 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                     <div className="h-4" />
                 </div>
 
-                {/* 3. Floating Input Area */}
-                {/* 3. Floating Input Area */}
-                <div className="p-4 bg-white border-t border-gray-100 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                {/* 3. Floating Input Area - WhatsApp Style */}
+                <div className="p-3 bg-white border-t border-gray-100 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                    {/* Recording Indicator Bar */}
+                    {isRecording && (
+                        <div className="flex items-center gap-3 px-4 py-2 mb-2 bg-[#FF5630]/10 rounded-xl animate-pulse">
+                            <div className="w-3 h-3 bg-[#FF5630] rounded-full animate-pulse" />
+                            <span className="text-sm font-medium text-[#FF5630]">Merekam... {formatTime(recordingTime)}</span>
+                            <div className="flex-1" />
+                            <button
+                                type="button"
+                                onClick={stopRecording}
+                                className="text-xs font-medium text-[#6B778C] hover:text-[#FF5630] transition"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    )}
+
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                         className="flex items-end gap-2"
                     >
-                        {/* Attachment Button */}
-                        <div className="flex-shrink-0 flex gap-1 bg-[#F4F5F7] p-1 rounded-xl border border-gray-200">
-                            <button
-                                type="button"
-                                onClick={() => setShowPhotoOptions(!showPhotoOptions)}
-                                className={cn("p-2.5 rounded-lg text-[#6B778C] hover:text-[#00875A] hover:bg-white transition-all", showPhotoOptions && "text-[#00875A] bg-white shadow-sm")}
-                            >
-                                <Camera size={20} />
-                            </button>
-                            <button
-                                type="button"
-                                onMouseDown={startRecording}
-                                onMouseUp={stopRecording}
-                                onTouchStart={startRecording}
-                                onTouchEnd={stopRecording}
-                                disabled={isLoading}
-                                className={cn("p-2.5 rounded-lg text-[#6B778C] hover:text-[#FF5630] hover:bg-white transition-all active:scale-90",
-                                    isRecording && "text-[#FF5630] bg-[#FF5630]/10 animate-pulse",
-                                    isLoading && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                <Mic size={20} />
-                            </button>
-                        </div>
+                        {/* Photo Menu Button (Left) */}
+                        <button
+                            type="button"
+                            onClick={() => setShowPhotoOptions(!showPhotoOptions)}
+                            className={cn(
+                                "p-2.5 rounded-full text-[#6B778C] hover:text-[#00875A] hover:bg-[#F4F5F7] transition-all flex-shrink-0",
+                                showPhotoOptions && "text-[#00875A] bg-[#F4F5F7]"
+                            )}
+                        >
+                            <Camera size={22} />
+                        </button>
 
-                        {/* Input Field */}
-                        <div className="flex-1 bg-[#F4F5F7] rounded-2xl border border-gray-200 focus-within:border-[#00875A] focus-within:bg-white transition-all flex items-center px-4 py-2 relative">
+                        {/* Input Field Container */}
+                        <div className="flex-1 bg-[#F4F5F7] rounded-full border border-gray-200 focus-within:border-[#00875A] focus-within:bg-white transition-all flex items-center px-4 py-2 relative">
                             <input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isRecording ? `Merekam... ${formatTime(recordingTime)}` : "Ketik pengeluaran..."}
-                                className="w-full bg-transparent text-[#172B4D] placeholder:text-[#6B778C] text-sm focus:outline-none py-1"
+                                placeholder="Ketik pesan..."
+                                className="w-full bg-transparent text-[#172B4D] placeholder:text-[#6B778C] text-sm focus:outline-none"
                                 disabled={isRecording}
                             />
                             {showPhotoOptions && (
@@ -674,14 +676,33 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                             )}
                         </div>
 
-                        {/* Send Button */}
-                        <button
-                            type="submit"
-                            disabled={!input.trim() || isLoading}
-                            className="p-3 rounded-xl bg-[#00875A] text-white shadow-md active:scale-95 transition-all flex-shrink-0 flex items-center justify-center hover:bg-[#006644] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send size={20} />
-                        </button>
+                        {/* Right Side: Mic OR Send Button */}
+                        {input.trim() ? (
+                            /* Send Button - appears when there's text */
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="p-2.5 rounded-full bg-[#00875A] text-white shadow-md active:scale-95 transition-all flex-shrink-0 hover:bg-[#006644] disabled:opacity-50"
+                            >
+                                <Send size={20} />
+                            </button>
+                        ) : (
+                            /* Mic Button - tap to toggle recording */
+                            <button
+                                type="button"
+                                onClick={isRecording ? stopRecording : startRecording}
+                                disabled={isLoading}
+                                className={cn(
+                                    "p-2.5 rounded-full transition-all flex-shrink-0 active:scale-95",
+                                    isRecording
+                                        ? "bg-[#FF5630] text-white shadow-md animate-pulse"
+                                        : "bg-[#F4F5F7] text-[#6B778C] hover:text-[#FF5630] hover:bg-[#FF5630]/10",
+                                    isLoading && "opacity-50 cursor-not-allowed"
+                                )}
+                            >
+                                <Mic size={20} />
+                            </button>
+                        )}
                     </form>
                 </div>
 
