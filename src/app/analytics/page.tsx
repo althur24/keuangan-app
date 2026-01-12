@@ -105,9 +105,10 @@ export default function AnalyticsPage() {
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<'start' | 'end'>('start');
 
-    // Trend Chart state
+    // Trend Chart state - separate periods for each chart
     type TrendPeriod = '7d' | '30d' | '12m';
-    const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>('7d');
+    const [expensePeriod, setExpensePeriod] = useState<TrendPeriod>('7d');
+    const [incomePeriod, setIncomePeriod] = useState<TrendPeriod>('7d');
 
     // Budget Tracker state
     const [budgets, setBudgets] = useState<{ category: string; amount: number }[]>([]);
@@ -212,11 +213,10 @@ export default function AnalyticsPage() {
         : 0;
 
     // Trend Chart: Dynamic periods (7 days, 30 days, 12 months)
-    const getTrendData = () => {
-        const expenseData: { label: string; amount: number }[] = [];
-        const incomeData: { label: string; amount: number }[] = [];
+    const getTrendDataForPeriod = (period: TrendPeriod, type: 'expense' | 'income'): { label: string; amount: number }[] => {
+        const data: { label: string; amount: number }[] = [];
 
-        if (trendPeriod === '7d') {
+        if (period === '7d') {
             // 7 days - daily data
             for (let i = 6; i >= 0; i--) {
                 const date = new Date(now);
@@ -225,32 +225,21 @@ export default function AnalyticsPage() {
                 const nextDay = new Date(date);
                 nextDay.setDate(nextDay.getDate() + 1);
 
-                const dayExpense = transactions
+                const dayTotal = transactions
                     .filter(t => {
                         const d = new Date(t.created_at);
-                        return t.type === 'expense' && d >= date && d < nextDay;
+                        return t.type === type && d >= date && d < nextDay;
                     })
                     .reduce((s, t) => s + t.amount, 0);
 
-                const dayIncome = transactions
-                    .filter(t => {
-                        const d = new Date(t.created_at);
-                        return t.type === 'income' && d >= date && d < nextDay;
-                    })
-                    .reduce((s, t) => s + t.amount, 0);
-
-                expenseData.push({
+                data.push({
                     label: date.toLocaleDateString('id-ID', { weekday: 'short' }),
-                    amount: dayExpense
-                });
-                incomeData.push({
-                    label: date.toLocaleDateString('id-ID', { weekday: 'short' }),
-                    amount: dayIncome
+                    amount: dayTotal
                 });
             }
-        } else if (trendPeriod === '30d') {
-            // 30 days - weekly data (4-5 weeks)
-            for (let i = 4; i >= 0; i--) {
+        } else if (period === '30d') {
+            // 30 days - 4 weeks
+            for (let i = 3; i >= 0; i--) {
                 const weekEnd = new Date(now);
                 weekEnd.setDate(weekEnd.getDate() - (i * 7));
                 weekEnd.setHours(23, 59, 59, 999);
@@ -258,27 +247,16 @@ export default function AnalyticsPage() {
                 weekStart.setDate(weekStart.getDate() - 6);
                 weekStart.setHours(0, 0, 0, 0);
 
-                const weekExpense = transactions
+                const weekTotal = transactions
                     .filter(t => {
                         const d = new Date(t.created_at);
-                        return t.type === 'expense' && d >= weekStart && d <= weekEnd;
+                        return t.type === type && d >= weekStart && d <= weekEnd;
                     })
                     .reduce((s, t) => s + t.amount, 0);
 
-                const weekIncome = transactions
-                    .filter(t => {
-                        const d = new Date(t.created_at);
-                        return t.type === 'income' && d >= weekStart && d <= weekEnd;
-                    })
-                    .reduce((s, t) => s + t.amount, 0);
-
-                expenseData.push({
-                    label: `Mg ${5 - i}`,
-                    amount: weekExpense
-                });
-                incomeData.push({
-                    label: `Mg ${5 - i}`,
-                    amount: weekIncome
+                data.push({
+                    label: `Mg ${4 - i}`,
+                    amount: weekTotal
                 });
             }
         } else {
@@ -287,36 +265,26 @@ export default function AnalyticsPage() {
                 const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
 
-                const monthExpense = transactions
+                const monthTotal = transactions
                     .filter(t => {
                         const d = new Date(t.created_at);
-                        return t.type === 'expense' && d >= monthDate && d <= monthEnd;
-                    })
-                    .reduce((s, t) => s + t.amount, 0);
-
-                const monthIncome = transactions
-                    .filter(t => {
-                        const d = new Date(t.created_at);
-                        return t.type === 'income' && d >= monthDate && d <= monthEnd;
+                        return t.type === type && d >= monthDate && d <= monthEnd;
                     })
                     .reduce((s, t) => s + t.amount, 0);
 
                 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                expenseData.push({
+                data.push({
                     label: monthNames[monthDate.getMonth()],
-                    amount: monthExpense
-                });
-                incomeData.push({
-                    label: monthNames[monthDate.getMonth()],
-                    amount: monthIncome
+                    amount: monthTotal
                 });
             }
         }
 
-        return { expenseData, incomeData };
+        return data;
     };
 
-    const { expenseData: trendExpenseData, incomeData: trendIncomeData } = getTrendData();
+    const trendExpenseData = getTrendDataForPeriod(expensePeriod, 'expense');
+    const trendIncomeData = getTrendDataForPeriod(incomePeriod, 'income');
     const trendExpenseMax = Math.max(...trendExpenseData.map(d => d.amount), 1);
     const trendIncomeMax = Math.max(...trendIncomeData.map(d => d.amount), 1);
 
@@ -483,38 +451,34 @@ export default function AnalyticsPage() {
 
             {/* Trend Charts Section */}
             <div className="px-6 mb-4 space-y-4">
-                {/* Period Toggle */}
-                <div className="flex gap-2 justify-center">
-                    {([
-                        { key: '7d', label: '7 Hari' },
-                        { key: '30d', label: '30 Hari' },
-                        { key: '12m', label: '12 Bulan' }
-                    ] as { key: TrendPeriod; label: string }[]).map(p => (
-                        <button
-                            key={p.key}
-                            onClick={() => setTrendPeriod(p.key)}
-                            className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${trendPeriod === p.key
-                                    ? 'bg-[#00875A] text-white shadow-md'
-                                    : 'bg-white text-[#6B778C] border border-gray-200 hover:bg-[#F4F5F7]'
-                                }`}
-                        >
-                            {p.label}
-                        </button>
-                    ))}
-                </div>
-
                 {/* Expense Trend Chart */}
                 <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100/50">
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 rounded-lg bg-[#FF5630]/10">
                                 <TrendingDown size={14} className="text-[#FF5630]" />
                             </div>
                             <h3 className="text-sm font-bold text-[#172B4D]">Tren Pengeluaran</h3>
                         </div>
-                        <span className="text-[10px] font-medium text-white bg-[#FF5630] px-2.5 py-1 rounded-full">
-                            {trendPeriod === '7d' ? '7 Hari' : trendPeriod === '30d' ? '30 Hari' : '12 Bulan'}
-                        </span>
+                    </div>
+                    {/* Period Toggle for Expense */}
+                    <div className="flex gap-1.5 mb-4">
+                        {([
+                            { key: '7d', label: '7 Hari' },
+                            { key: '30d', label: '30 Hari' },
+                            { key: '12m', label: '12 Bulan' }
+                        ] as { key: TrendPeriod; label: string }[]).map(p => (
+                            <button
+                                key={p.key}
+                                onClick={() => setExpensePeriod(p.key)}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${expensePeriod === p.key
+                                        ? 'bg-[#FF5630] text-white'
+                                        : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
+                                    }`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
                     </div>
                     {loading ? (
                         <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl animate-pulse" />
@@ -588,16 +552,32 @@ export default function AnalyticsPage() {
 
                 {/* Income Trend Chart */}
                 <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100/50">
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 rounded-lg bg-[#36B37E]/10">
                                 <TrendingUp size={14} className="text-[#36B37E]" />
                             </div>
                             <h3 className="text-sm font-bold text-[#172B4D]">Tren Pemasukan</h3>
                         </div>
-                        <span className="text-[10px] font-medium text-white bg-[#36B37E] px-2.5 py-1 rounded-full">
-                            {trendPeriod === '7d' ? '7 Hari' : trendPeriod === '30d' ? '30 Hari' : '12 Bulan'}
-                        </span>
+                    </div>
+                    {/* Period Toggle for Income */}
+                    <div className="flex gap-1.5 mb-4">
+                        {([
+                            { key: '7d', label: '7 Hari' },
+                            { key: '30d', label: '30 Hari' },
+                            { key: '12m', label: '12 Bulan' }
+                        ] as { key: TrendPeriod; label: string }[]).map(p => (
+                            <button
+                                key={p.key}
+                                onClick={() => setIncomePeriod(p.key)}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${incomePeriod === p.key
+                                        ? 'bg-[#36B37E] text-white'
+                                        : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
+                                    }`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
                     </div>
                     {loading ? (
                         <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl animate-pulse" />
