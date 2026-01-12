@@ -616,7 +616,7 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 </div>
 
                 {/* 3. Floating Input Area - WhatsApp Style */}
-                <div className="px-3 pt-2 pb-4 mb-4 bg-white border-t border-gray-100 z-20">
+                <div className="p-3 mb-4 bg-white border-t border-gray-100 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
                     {/* Recording Indicator Bar */}
                     {isRecording && (
                         <div className="flex items-center gap-3 px-4 py-2 mb-2 bg-[#FF5630]/10 rounded-xl animate-pulse">
