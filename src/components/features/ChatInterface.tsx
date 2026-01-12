@@ -619,14 +619,14 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 <div className="p-3 mb-4 bg-white border-t border-gray-100 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
                     {/* Recording Indicator Bar */}
                     {isRecording && (
-                        <div className="flex items-center gap-3 px-4 py-2 mb-2 bg-[#FF5630]/10 rounded-xl animate-pulse">
-                            <div className="w-3 h-3 bg-[#FF5630] rounded-full animate-pulse" />
-                            <span className="text-sm font-medium text-[#FF5630]">Merekam... {formatTime(recordingTime)}</span>
+                        <div className="flex items-center gap-3 px-4 py-2 mb-2 bg-[#00875A]/10 rounded-xl animate-pulse">
+                            <div className="w-3 h-3 bg-[#00875A] rounded-full animate-pulse" />
+                            <span className="text-sm font-medium text-[#00875A]">Merekam... {formatTime(recordingTime)}</span>
                             <div className="flex-1" />
                             <button
                                 type="button"
                                 onClick={stopRecording}
-                                className="text-xs font-medium text-[#6B778C] hover:text-[#FF5630] transition"
+                                className="text-xs font-medium text-[#6B778C] hover:text-[#00875A] transition"
                             >
                                 Batal
                             </button>
@@ -695,8 +695,8 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                 className={cn(
                                     "p-2.5 rounded-full transition-all flex-shrink-0 active:scale-95",
                                     isRecording
-                                        ? "bg-[#FF5630] text-white shadow-md animate-pulse"
-                                        : "bg-[#F4F5F7] text-[#6B778C] hover:text-[#FF5630] hover:bg-[#FF5630]/10",
+                                        ? "bg-[#00875A] text-white shadow-md animate-pulse"
+                                        : "bg-[#F4F5F7] text-[#6B778C] hover:text-[#00875A] hover:bg-[#00875A]/10",
                                     isLoading && "opacity-50 cursor-not-allowed"
                                 )}
                             >
