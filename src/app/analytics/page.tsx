@@ -472,8 +472,8 @@ export default function AnalyticsPage() {
                                 key={p.key}
                                 onClick={() => setExpensePeriod(p.key)}
                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${expensePeriod === p.key
-                                        ? 'bg-[#FF5630] text-white'
-                                        : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
+                                    ? 'bg-[#FF5630] text-white'
+                                    : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
                                     }`}
                             >
                                 {p.label}
@@ -525,6 +525,19 @@ export default function AnalyticsPage() {
                                     const clampedY = Math.max(y, 30);
                                     return (
                                         <g key={i}>
+                                            {/* Amount Label Above Dot */}
+                                            {d.amount > 0 && (
+                                                <text
+                                                    x={x}
+                                                    y={clampedY - 10}
+                                                    textAnchor="middle"
+                                                    fontSize="7"
+                                                    fontWeight="600"
+                                                    fill="#FF5630"
+                                                >
+                                                    {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
+                                                </text>
+                                            )}
                                             <circle cx={x} cy={clampedY} r="6" fill="#FF5630" opacity="0.1" />
                                             <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#FF5630" strokeWidth="2" />
                                         </g>
@@ -571,8 +584,8 @@ export default function AnalyticsPage() {
                                 key={p.key}
                                 onClick={() => setIncomePeriod(p.key)}
                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${incomePeriod === p.key
-                                        ? 'bg-[#36B37E] text-white'
-                                        : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
+                                    ? 'bg-[#36B37E] text-white'
+                                    : 'bg-[#F4F5F7] text-[#6B778C] hover:bg-gray-200'
                                     }`}
                             >
                                 {p.label}
@@ -624,6 +637,19 @@ export default function AnalyticsPage() {
                                     const clampedY = Math.max(y, 30);
                                     return (
                                         <g key={i}>
+                                            {/* Amount Label Above Dot */}
+                                            {d.amount > 0 && (
+                                                <text
+                                                    x={x}
+                                                    y={clampedY - 10}
+                                                    textAnchor="middle"
+                                                    fontSize="7"
+                                                    fontWeight="600"
+                                                    fill="#36B37E"
+                                                >
+                                                    {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(d.amount)}
+                                                </text>
+                                            )}
                                             <circle cx={x} cy={clampedY} r="6" fill="#36B37E" opacity="0.1" />
                                             <circle cx={x} cy={clampedY} r="3" fill="white" stroke="#36B37E" strokeWidth="2" />
                                         </g>
