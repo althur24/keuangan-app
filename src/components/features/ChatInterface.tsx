@@ -16,6 +16,7 @@ interface Message {
     saved?: boolean;
     mediaType?: 'voice' | 'image';
     attachment?: string;
+    duration?: number; // For voice notes
 }
 
 // --- Helper Components ---
@@ -347,7 +348,9 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 const blob = new Blob(chunks, { type: 'audio/webm' });
                 if (blob.size > 0) {
                     const reader = new FileReader();
-                    reader.onloadend = () => sendToAI(reader.result as string, 'audio/webm');
+                    // Capture duration before it resets
+                    const finalDuration = recordingTime;
+                    reader.onloadend = () => sendToAI(reader.result as string, 'audio/webm', finalDuration);
                     reader.readAsDataURL(blob);
                 }
                 stream.getTracks().forEach(t => t.stop());
@@ -373,11 +376,20 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
             timerRef.current = null;
         }
 
+        // Stop the media recorder if it's recording
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.stop();
         }
+        mediaRecorderRef.current = null;
+
+        // Ensure stream tracks are stopped (this fixes mic staying on)
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
 
         setIsRecording(false);
+        setRecordingTime(0);
     };
 
     const formatTime = (seconds: number) => {
@@ -427,7 +439,7 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
         }
     }, [messages]); // Trigger on every message update
 
-    const sendToAI = async (mediaBase64?: string, mimeType?: string) => {
+    const sendToAI = async (mediaBase64?: string, mimeType?: string, duration?: number) => {
         if ((!input.trim() && !mediaBase64) || isLoading) return;
 
         const contentDisplay = mimeType?.startsWith('audio/') ? "Voice Note" :
@@ -439,7 +451,8 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
             content: contentDisplay,
             timestamp: new Date(),
             mediaType: mimeType?.startsWith('audio/') ? 'voice' : mediaBase64 ? 'image' : undefined,
-            attachment: mediaBase64
+            attachment: mediaBase64,
+            duration: mimeType?.startsWith('audio/') ? duration : undefined
         };
 
         setMessages(p => [...p, newMessage]);
@@ -572,7 +585,7 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
                                             {/* Voice Note Display - WhatsApp Style */}
                                             {msg.mediaType === 'voice' && msg.attachment && (
-                                                <VoiceNoteBubble audioSrc={msg.attachment} duration={recordingTime} />
+                                                <VoiceNoteBubble audioSrc={msg.attachment} duration={msg.duration || 0} />
                                             )}
 
                                             {/* Text Content (hide for media-only messages) */}
