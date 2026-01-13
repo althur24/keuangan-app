@@ -360,7 +360,7 @@ export default function Home() {
 
       {/* Budget Modal */}
       {showBudgetModal && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setShowBudgetModal(false)}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setShowBudgetModal(false)}>
           <div className="w-full max-w-md bg-white rounded-t-2xl p-6 pb-28 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
             <h3 className="text-lg font-bold text-[#172B4D] mb-4">{editingCategory ? 'Edit Budget' : 'Atur Budget Baru'}</h3>
