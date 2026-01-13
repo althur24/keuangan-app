@@ -427,9 +427,25 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
     useEffect(() => {
         if (!user?.id || messages.length === 0) return;
 
-        // Save history (including attachments for MVP persistence)
-        // Note: In production, large base64 strings should be uploaded to storage, not kept in localStorage.
-        localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(messages));
+        // Save history WITHOUT large attachments to prevent localStorage quota exceeded
+        // Voice notes and images are too large to store in localStorage (~5MB limit)
+        const messagesForStorage = messages.map(msg => ({
+            ...msg,
+            attachment: undefined, // Don't store base64 attachments
+        }));
+
+        try {
+            localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(messagesForStorage));
+        } catch (e) {
+            console.warn('Failed to save chat history to localStorage:', e);
+            // If still fails, clear old history and try again with just recent messages
+            try {
+                const recentMessages = messagesForStorage.slice(-20);
+                localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(recentMessages));
+            } catch {
+                // Give up on localStorage
+            }
+        }
     }, [messages, user?.id]);
 
     // Robust Scroll Effect
