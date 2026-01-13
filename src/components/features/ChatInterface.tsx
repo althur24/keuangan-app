@@ -666,16 +666,18 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                         className="flex items-end gap-2"
                     >
-                        {/* Photo Menu Button (Left) */}
+                        {/* Photo Menu Button (Left) - Shows X when menu is open */}
                         <button
                             type="button"
                             onClick={() => setShowPhotoOptions(!showPhotoOptions)}
                             className={cn(
-                                "p-2.5 rounded-full text-[#6B778C] hover:text-[#00875A] hover:bg-[#F4F5F7] transition-all flex-shrink-0",
-                                showPhotoOptions && "text-[#00875A] bg-[#F4F5F7]"
+                                "p-2.5 rounded-full transition-all flex-shrink-0",
+                                showPhotoOptions
+                                    ? "text-[#FF5630] bg-[#FF5630]/10 rotate-0"
+                                    : "text-[#6B778C] hover:text-[#00875A] hover:bg-[#F4F5F7]"
                             )}
                         >
-                            <Camera size={22} />
+                            {showPhotoOptions ? <X size={22} /> : <Camera size={22} />}
                         </button>
 
                         {/* Input Field Container */}
@@ -729,7 +731,8 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                     isLoading && "opacity-50 cursor-not-allowed"
                                 )}
                             >
-                                <Mic size={20} />
+                                {/* Show Send icon when recording, Mic when not */}
+                                {isRecording ? <Send size={20} /> : <Mic size={20} />}
                             </button>
                         )}
                     </form>
