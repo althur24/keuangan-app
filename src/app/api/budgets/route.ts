@@ -34,11 +34,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { category, amount } = await req.json();
+        const { category, amount, period } = await req.json();
 
         if (!category || !amount || amount <= 0) {
             return NextResponse.json({ error: 'Invalid category or amount' }, { status: 400 });
         }
+
+        // Valid periods: 'weekly', 'monthly', 'none' (default: 'monthly')
+        const validPeriod = ['weekly', 'monthly', 'none'].includes(period) ? period : 'monthly';
 
         const supabase = createClient();
 
@@ -49,6 +52,7 @@ export async function POST(req: Request) {
                 user_id: session.userId,
                 category: category.toLowerCase(),
                 amount: Math.round(amount),
+                period: validPeriod,
                 updated_at: new Date().toISOString()
             }, {
                 onConflict: 'user_id,category'
