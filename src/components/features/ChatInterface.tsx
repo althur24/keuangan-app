@@ -598,14 +598,22 @@ export function ChatInterface({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                                     <ImageBubble src={msg.attachment} />
                                                 </div>
                                             )}
+                                            {/* Image Placeholder when attachment not available */}
+                                            {msg.mediaType === 'image' && !msg.attachment && (
+                                                <span className="flex items-center gap-1.5">📷 Foto Struk</span>
+                                            )}
 
                                             {/* Voice Note Display - WhatsApp Style */}
                                             {msg.mediaType === 'voice' && msg.attachment && (
                                                 <VoiceNoteBubble audioSrc={msg.attachment} duration={msg.duration || 0} />
                                             )}
+                                            {/* Voice Note Placeholder when attachment not available */}
+                                            {msg.mediaType === 'voice' && !msg.attachment && (
+                                                <span className="flex items-center gap-1.5">🎤 Voice Note</span>
+                                            )}
 
-                                            {/* Text Content (hide for media-only messages) */}
-                                            {(!msg.mediaType || (msg.mediaType && msg.content !== 'Voice Note' && msg.content !== 'Foto Struk')) && (
+                                            {/* Text Content (hide for media messages) */}
+                                            {!msg.mediaType && (
                                                 <span>{msg.content}</span>
                                             )}
 
