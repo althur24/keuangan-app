@@ -110,11 +110,8 @@ export default function AnalyticsPage() {
     const [expensePeriod, setExpensePeriod] = useState<TrendPeriod>('7d');
     const [incomePeriod, setIncomePeriod] = useState<TrendPeriod>('7d');
 
-    // Budget Tracker state
+    // Budget data for category spending calculation (used in byCategory)
     const [budgets, setBudgets] = useState<{ category: string; amount: number }[]>([]);
-    const [showBudgetModal, setShowBudgetModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<string | null>(null);
-    const [budgetAmount, setBudgetAmount] = useState('');
 
     const supabase = createClient();
     const { user, loading: authLoading } = useAuth();
@@ -703,65 +700,6 @@ export default function AnalyticsPage() {
             </div>
 
             <section className="flex-1 bg-white rounded-t-2xl px-6 pt-5 pb-28 shadow-lg">
-                {/* Budget Tracker Section */}
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-base font-bold text-[#172B4D]">Budget Tracker</h2>
-                        <button
-                            onClick={() => { setShowBudgetModal(true); setEditingCategory(null); setBudgetAmount(''); }}
-                            className="text-xs font-semibold text-[#00875A] hover:underline"
-                        >
-                            + Atur Budget
-                        </button>
-                    </div>
-
-                    {budgets.length === 0 ? (
-                        <div className="bg-[#F4F5F7] rounded-lg p-4 text-center">
-                            <p className="text-sm text-[#6B778C]">Belum ada budget yang diatur</p>
-                            <p className="text-xs text-[#6B778C]/70 mt-1">Tap "+ Atur Budget" untuk mulai</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {budgets.map(budget => {
-                                const spent = byCategory[budget.category] || 0;
-                                const percentage = Math.min((spent / budget.amount) * 100, 100);
-                                const isOver = spent > budget.amount;
-
-                                return (
-                                    <div
-                                        key={budget.category}
-                                        className="bg-[#F4F5F7] rounded-lg p-3 cursor-pointer hover:bg-[#EBECF0] transition active:scale-[0.98]"
-                                        onClick={() => {
-                                            setEditingCategory(budget.category);
-                                            setBudgetAmount(budget.amount.toString());
-                                            setShowBudgetModal(true);
-                                        }}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium text-[#172B4D] capitalize">{getCategoryLabel(budget.category)}</span>
-                                                {isOver && <span className="text-[8px] bg-[#FF5630] text-white px-1.5 py-0.5 rounded-full font-bold">OVER</span>}
-                                            </div>
-                                            <span className={`text-xs font-bold ${isOver ? 'text-[#FF5630]' : 'text-[#172B4D]'}`}>
-                                                {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(spent)} / {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(budget.amount)}
-                                            </span>
-                                        </div>
-                                        <div className="h-2 bg-white rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full transition-all duration-500 ${isOver ? 'bg-[#FF5630]' : 'bg-[#00875A]'}`}
-                                                style={{ width: `${percentage}%` }}
-                                            />
-                                        </div>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <p className="text-[10px] text-[#6B778C]">{percentage.toFixed(0)}% terpakai</p>
-                                            <p className="text-[10px] text-[#00875A] font-medium">Tap untuk edit</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
 
                 {/* Pengeluaran per Kategori Section */}
                 <div className="pt-4 border-t border-gray-100">
@@ -802,115 +740,6 @@ export default function AnalyticsPage() {
                 </div>
             </section>
 
-            {/* Budget Modal */}
-            {showBudgetModal && (
-                <div className="fixed inset-0 z-[999] flex items-end justify-center" onClick={() => setShowBudgetModal(false)}>
-                    <div className="absolute inset-0 bg-black/50" />
-                    <div
-                        className="relative bg-white rounded-t-2xl w-full max-w-md p-6 pb-8 animate-fade-in-up"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-                        <h3 className="text-lg font-bold text-[#172B4D] mb-4">Atur Budget Kategori</h3>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs font-medium text-[#6B778C] mb-1 block">Pilih Kategori</label>
-                                <select
-                                    value={editingCategory || ''}
-                                    onChange={(e) => setEditingCategory(e.target.value)}
-                                    className="w-full p-3 rounded-lg border border-gray-200 text-sm text-[#172B4D] bg-white"
-                                >
-                                    <option value="">-- Pilih --</option>
-                                    {categories.filter(c => !['gaji', 'investasi', 'bonus'].includes(c)).map(cat => (
-                                        <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-medium text-[#6B778C] mb-1 block">Limit Budget (Rp)</label>
-                                <input
-                                    type="number"
-                                    value={budgetAmount}
-                                    onChange={(e) => setBudgetAmount(e.target.value)}
-                                    placeholder="Contoh: 500000"
-                                    className="w-full p-3 rounded-lg border border-gray-200 text-sm text-[#172B4D]"
-                                />
-                            </div>
-
-                            <button
-                                onClick={async () => {
-                                    if (!editingCategory || !budgetAmount) {
-                                        alert('Pilih kategori dan masukkan nominal budget');
-                                        return;
-                                    }
-                                    try {
-                                        console.log('Saving budget:', { category: editingCategory, amount: parseInt(budgetAmount) });
-                                        const res = await fetch('/api/budgets', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ category: editingCategory, amount: parseInt(budgetAmount) })
-                                        });
-                                        console.log('API response status:', res.status);
-                                        const result = await res.json();
-                                        console.log('API response:', result);
-
-                                        if (res.ok && result.budget) {
-                                            setBudgets(prev => {
-                                                const exists = prev.find(b => b.category === result.budget.category);
-                                                if (exists) {
-                                                    return prev.map(b => b.category === result.budget.category ? result.budget : b);
-                                                }
-                                                return [...prev, result.budget];
-                                            });
-                                            setShowBudgetModal(false);
-                                            setEditingCategory(null);
-                                            setBudgetAmount('');
-                                        } else {
-                                            alert('Gagal menyimpan: ' + (result.error || 'Unknown error'));
-                                        }
-                                    } catch (e) {
-                                        console.error('Failed to save budget:', e);
-                                        alert('Terjadi kesalahan jaringan');
-                                    }
-                                }}
-                                disabled={!editingCategory || !budgetAmount}
-                                className="w-full py-3 bg-[#00875A] text-white font-semibold rounded-xl disabled:opacity-50 hover:bg-[#006644] transition shadow-md"
-                            >
-                                Simpan Budget
-                            </button>
-
-                            {/* Delete button - only show when editing existing budget */}
-                            {editingCategory && budgets.some(b => b.category === editingCategory) && (
-                                <button
-                                    onClick={async () => {
-                                        if (!confirm(`Hapus budget untuk ${getCategoryLabel(editingCategory)}?`)) return;
-                                        try {
-                                            const res = await fetch(`/api/budgets?category=${editingCategory}`, {
-                                                method: 'DELETE'
-                                            });
-                                            if (res.ok) {
-                                                setBudgets(prev => prev.filter(b => b.category !== editingCategory));
-                                                setShowBudgetModal(false);
-                                                setEditingCategory(null);
-                                                setBudgetAmount('');
-                                            } else {
-                                                alert('Gagal menghapus budget');
-                                            }
-                                        } catch (e) {
-                                            alert('Terjadi kesalahan jaringan');
-                                        }
-                                    }}
-                                    className="w-full py-3 bg-white text-[#FF5630] font-semibold rounded-xl border border-[#FF5630] hover:bg-[#FF5630]/5 transition mt-2"
-                                >
-                                    Hapus Budget
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <BottomNav />
         </div>
