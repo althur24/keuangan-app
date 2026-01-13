@@ -2,17 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, History, PieChart, Settings, CreditCard } from 'lucide-react'; // Changed LogOut to Settings
+import { Home, History, PieChart, Settings, CreditCard, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FloatingActionButton } from './FloatingActionButton';
-import { ChatInterface } from '@/components/features/ChatInterface';
-import { useState } from 'react';
-// import { useAuth } from '@/components/providers/AuthProvider'; // No longer needed for direct logout
+import { useState, Suspense, lazy } from 'react';
+
+// Lazy load ChatInterface - only loads when user clicks chat button
+const ChatInterface = lazy(() => import('@/components/features/ChatInterface').then(m => ({ default: m.ChatInterface })));
 
 export function BottomNav() {
     const pathname = usePathname();
     const [isChatOpen, setIsChatOpen] = useState(false);
-    // const { signOut } = useAuth(); // Moved to Settings page
 
     const navItems = [
         { label: 'Beranda', icon: Home, href: '/' },
@@ -66,7 +66,19 @@ export function BottomNav() {
                     </div>
                 </div>
             </div>
-            <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+            {/* Lazy loaded ChatInterface - only renders when opened */}
+            {isChatOpen && (
+                <Suspense fallback={
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-white" />
+                            <span className="text-white text-sm">Memuat chat...</span>
+                        </div>
+                    </div>
+                }>
+                    <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+                </Suspense>
+            )}
         </>
     );
 }
