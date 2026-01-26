@@ -1,7 +1,7 @@
 'use client';
 
 import { BottomNav } from "@/components/layout/BottomNav";
-import { ArrowUpRight, ArrowDownLeft, Loader2, Activity, CreditCard, ChevronRight, Settings2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Loader2, Activity, CreditCard, ChevronRight, Settings2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
@@ -30,6 +30,7 @@ export default function Home() {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [budgetAmount, setBudgetAmount] = useState('');
   const [budgetPeriod, setBudgetPeriod] = useState<'weekly' | 'monthly' | 'none'>('monthly');
+  const [showBalance, setShowBalance] = useState(true);
 
   useEffect(() => { if (!loading && !user) router.push('/login'); }, [user, loading, router]);
 
@@ -214,9 +215,20 @@ export default function Home() {
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-100/90">Total Saldo</span>
             </div>
-            <p className="text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
-              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(balance)}
-            </p>
+            <div className="flex items-center justify-center gap-3">
+              <p className="text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                {showBalance
+                  ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(balance)
+                  : 'Rp ••••••••'
+                }
+              </p>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition backdrop-blur-sm text-white/80 hover:text-white"
+              >
+                {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-3 relative z-10">
@@ -227,7 +239,12 @@ export default function Home() {
                 </div>
                 <span className="text-[10px] uppercase tracking-wider text-[#6B778C] font-semibold">Masuk</span>
               </div>
-              <p className="text-sm font-bold text-[#36B37E] truncate">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalIncome)}</p>
+              <p className="text-sm font-bold text-[#36B37E] truncate">
+                {showBalance
+                  ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalIncome)
+                  : '•••••••'
+                }
+              </p>
             </div>
             <div className="flex-1 bg-white rounded-xl p-3 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 mb-1.5">
@@ -236,7 +253,12 @@ export default function Home() {
                 </div>
                 <span className="text-[10px] uppercase tracking-wider text-[#6B778C] font-semibold">Keluar</span>
               </div>
-              <p className="text-sm font-bold text-[#FF5630] truncate">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalExpense)}</p>
+              <p className="text-sm font-bold text-[#FF5630] truncate">
+                {showBalance
+                  ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalExpense)
+                  : '•••••••'
+                }
+              </p>
             </div>
           </div>
         </div>
